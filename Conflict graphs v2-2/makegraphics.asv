@@ -1,0 +1,52 @@
+function makegraphics()
+number_of_iterations = 3;
+parameters = setparameters;
+starting_state = parameters.start_state;
+currentstate = starting_state;
+
+save_plot(currentstate, 0, 'This is the starting position where all city-states are independent.');
+for Counter = 1:number_of_iterations
+    [currentstate, status, message] = debug_turnstep(currentstate, parameters);
+    save_plot(currentstate, Counter, message);
+end
+end
+
+function [ new_mapstate, status, message ] = debug_turnstep( starting_mapstate, parameters )
+%TURNSTEP Summary of this function goes here
+%   Detailed explanation goes here
+strategy_matrix = payoffstrategy(starting_mapstate, full(adjacency(starting_mapstate.network)), ...
+    allresources(starting_mapstate), parameters);
+[status, attackingnode, defendingnode] = determine_attack(strategy_matrix);
+if status == 1
+    new_mapstate = attack(starting_mapstate, attackingnode, defendingnode, parameters);
+else
+    new_mapstate = starting_mapstate;
+    error('Peace happened.');
+end
+attackingplayer = starting_mapstate.nodeowners(attackingnode);
+defendingplayer = starting_mapstate.nodeowners(defendingnode);
+winner = new_mapstate.nodeowners(defendingnode);
+
+end
+
+function [message_text] = write_message(attackingnode, defendingnode, attackingplayer, defendingplayer, winner, parameters)
+starting_state = parameters.start_state;
+network = starting_state.network;
+attack_source_name = network.Nodes.Name(attackingnode);
+attack_target_name = network.Nodes.Name(defendingnode);
+attackingplayer = network.Nodes.Name(attackingplayer);
+defendingplayer = network.Nodes.Name(defendingplayer);
+message_text = [attackingplayer ' attacks ' defendingplayer ' from ' attack_source_name ' at ' ...
+    attack_target_name];
+if winner == attackingplayer
+    message_text = [message_text ' and wins.'];
+else
+    message_text = [message_text ' and loses.'];
+end
+
+end
+
+function save_plot(mapstate, index, message)
+
+
+end

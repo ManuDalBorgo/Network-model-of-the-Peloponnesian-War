@@ -1,0 +1,52 @@
+function [judgment] = iscompatible(currentstate,futurestate, parameters)
+%ISCOMPATIBLE Determines whether it is possible for a current state of
+%affairs to come before a future state of affairs. Only compares node
+%ownership
+%Returns 1 if it is compatible
+%Tests a) if the remaining players list is a superset of the future state
+% and b) if everything owned by a (future) remaining player is not owned by
+% a different (future) remaining player
+% and c) if no eliminated player owns stuff that will belong to multiple
+% players
+% Only test b and c if sudden death is on.
+judgment = 1;
+suddendeath = parameters.suddendeath;
+currentplayers = currentstate.remainingplayers;
+futureplayers = futurestate.remainingplayers;
+if all(ismember(futureplayers, currentplayers))
+else
+    judgment = 0;
+end
+if suddendeath == 1
+    if judgment == 1
+        eliminatedplayers = setdiff(currentplayers, futureplayers);
+        currentowners = currentstate.nodeowners;
+        futureowners = futurestate.nodeowners;
+        for Counter = 1:max(size(futureplayers))
+            testplayer = futureplayers(Counter);
+            %need currentowners(futureowners == testplayer) to contain only
+            %testplayer and eliminated players
+            playerstoconquer = currentowners(futureowners == testplayer & currentowners ~= testplayer);
+            if all(ismember(playerstoconquer, eliminatedplayers))
+            else
+                judgment = 0;
+            end
+        end
+    end
+    if judgment == 1
+        if isempty(eliminatedplayers)
+        else
+            for Counter = 1:max(size(eliminatedplayers))
+                playertoeliminate = eliminatedplayers(Counter);
+                stuff_goes_to = futureowners(currentowners == playertoeliminate);
+                if all(stuff_goes_to == stuff_goes_to(1))
+                else
+                    judgment = 0;
+                end
+            end
+        end
+        
+    end
+end
+end
+
